@@ -14,7 +14,6 @@ namespace Csla
   public interface IBusinessBase : IBusinessObject,
     IMobileObject,
     IEditableBusinessObject,
-    IEditableObject,
     ICloneable,
     INotifyPropertyChanged,
     ISavable,

@@ -322,11 +322,6 @@ namespace Csla
 
 #region  IParent Members
 
-    void Csla.Core.IParent.ApplyEditChild(Core.IEditableBusinessObject child)
-    {
-      if (!_activelySaving && child.EditLevel == 0)
-        SaveItem((T)child);
-    }
 
     void Csla.Core.IParent.RemoveChild(Core.IEditableBusinessObject child)
     {

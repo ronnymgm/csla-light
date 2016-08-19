@@ -48,7 +48,7 @@ namespace Csla
   [Serializable()]
   public abstract class BusinessBindingListBase<T, C> :
       Core.ExtendedBindingList<C>,
-      Core.IEditableCollection, Core.IUndoableObject, ICloneable,
+      Core.IEditableCollection, ICloneable,
       Core.ISavable, Core.ISavable<T>, Core.IParent, Server.IDataPortalTarget,
       INotifyBusy
     where T : BusinessBindingListBase<T, C>
@@ -164,235 +164,6 @@ namespace Csla
 
 #endregion
 
-#region Begin/Cancel/ApplyEdit
-
-    /// <summary>
-    /// Starts a nested edit on the object.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// When this method is called the object takes a snapshot of
-    /// its current state (the values of its variables). This snapshot
-    /// can be restored by calling <see cref="CancelEdit" />
-    /// or committed by calling <see cref="ApplyEdit" />.
-    /// </para><para>
-    /// This is a nested operation. Each call to BeginEdit adds a new
-    /// snapshot of the object's state to a stack. You should ensure that 
-    /// for each call to BeginEdit there is a corresponding call to either 
-    /// CancelEdit or ApplyEdit to remove that snapshot from the stack.
-    /// </para><para>
-    /// See Chapters 2 and 3 for details on n-level undo and state stacking.
-    /// </para><para>
-    /// This method triggers the copying of all child object states.
-    /// </para>
-    /// </remarks>
-    public void BeginEdit()
-    {
-      if (this.IsChild)
-        throw new NotSupportedException(Resources.NoBeginEditChildException);
-
-      CopyState(this.EditLevel + 1);
-    }
-
-    /// <summary>
-    /// Cancels the current edit process, restoring the object's state to
-    /// its previous values.
-    /// </summary>
-    /// <remarks>
-    /// Calling this method causes the most recently taken snapshot of the 
-    /// object's state to be restored. This resets the object's values
-    /// to the point of the last <see cref="BeginEdit" />
-    /// call.
-    /// <para>
-    /// This method triggers an undo in all child objects.
-    /// </para>
-    /// </remarks>
-    public void CancelEdit()
-    {
-      if (this.IsChild)
-        throw new NotSupportedException(Resources.NoCancelEditChildException);
-
-      UndoChanges(this.EditLevel - 1);
-    }
-
-    /// <summary>
-    /// Commits the current edit process.
-    /// </summary>
-    /// <remarks>
-    /// Calling this method causes the most recently taken snapshot of the 
-    /// object's state to be discarded, thus committing any changes made
-    /// to the object's state since the last 
-    /// <see cref="BeginEdit" /> call.
-    /// <para>
-    /// This method triggers an <see cref="Core.BusinessBase.ApplyEdit"/>
-    ///  in all child objects.
-    /// </para>
-    /// </remarks>
-    public void ApplyEdit()
-    {
-      if (this.IsChild)
-        throw new NotSupportedException(Resources.NoApplyEditChildException);
-
-      AcceptChanges(this.EditLevel - 1);
-    }
-
-    void Core.IParent.ApplyEditChild(Core.IEditableBusinessObject child)
-    {
-      EditChildComplete(child);
-    }
-
-    IParent Csla.Core.IParent.Parent
-    {
-      get { return this.Parent; }
-    }
-    /// <summary>
-    /// Override this method to be notified when a child object's
-    /// <see cref="Core.BusinessBase.ApplyEdit" /> method has
-    /// completed.
-    /// </summary>
-    /// <param name="child">The child object that was edited.</param>
-    protected virtual void EditChildComplete(Core.IEditableBusinessObject child)
-    {
-
-      // do nothing, we don't really care
-      // when a child has its edits applied
-    }
-
-#endregion
-
-#region N-level undo
-
-    void Core.IUndoableObject.CopyState(int parentEditLevel, bool parentBindingEdit)
-    {
-      if (!parentBindingEdit)
-        CopyState(parentEditLevel);
-    }
-
-    void Core.IUndoableObject.UndoChanges(int parentEditLevel, bool parentBindingEdit)
-    {
-      if (!parentBindingEdit)
-        UndoChanges(parentEditLevel);
-    }
-
-    void Core.IUndoableObject.AcceptChanges(int parentEditLevel, bool parentBindingEdit)
-    {
-      if (!parentBindingEdit)
-        AcceptChanges(parentEditLevel);
-    }
-
-    private void CopyState(int parentEditLevel)
-    {
-      if (this.EditLevel + 1 > parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "CopyState"));
-
-      // we are going a level deeper in editing
-      _editLevel += 1;
-
-      // cascade the call to all child objects
-      foreach (C child in this)
-        child.CopyState(_editLevel, false);
-
-      // cascade the call to all deleted child objects
-      foreach (C child in DeletedList)
-        child.CopyState(_editLevel, false);
-    }
-
-    private bool _completelyRemoveChild;
-
-    private void UndoChanges(int parentEditLevel)
-    {
-      C child;
-
-      if (this.EditLevel - 1 != parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "UndoChanges"));
-
-      // we are coming up one edit level
-      _editLevel -= 1;
-      if (_editLevel < 0) _editLevel = 0;
-
-      bool oldRLCE = this.RaiseListChangedEvents;
-      this.RaiseListChangedEvents = false;
-      try
-      {
-        // Cancel edit on all current items
-        for (int index = Count - 1; index >= 0; index--)
-        {
-          child = this[index];
-
-          child.UndoChanges(_editLevel, false);
-
-          // if item is below its point of addition, remove
-          if (child.EditLevelAdded > _editLevel)
-          {
-            bool oldAllowRemove = this.AllowRemove;
-            try
-            {
-              this.AllowRemove = true;
-              _completelyRemoveChild = true;
-              RemoveAt(index);
-            }
-            finally
-            {
-              _completelyRemoveChild = false;
-              this.AllowRemove = oldAllowRemove;
-            }
-          }
-        }
-
-        // cancel edit on all deleted items
-        for (int index = DeletedList.Count - 1; index >= 0; index--)
-        {
-          child = DeletedList[index];
-          child.UndoChanges(_editLevel, false);
-          if (child.EditLevelAdded > _editLevel)
-          {
-            // if item is below its point of addition, remove
-            DeletedList.RemoveAt(index);
-          }
-          else
-          {
-            // if item is no longer deleted move back to main list
-            if (!child.IsDeleted) UnDeleteChild(child);
-          }
-        }
-      }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRLCE;
-        OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
-      }
-    }
-
-    private void AcceptChanges(int parentEditLevel)
-    {
-      if (this.EditLevel - 1 != parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "AcceptChanges"));
-
-      // we are coming up one edit level
-      _editLevel -= 1;
-      if (_editLevel < 0) _editLevel = 0;
-
-      // cascade the call to all child objects
-      foreach (C child in this)
-      {
-        child.AcceptChanges(_editLevel, false);
-        // if item is below its point of addition, lower point of addition
-        if (child.EditLevelAdded > _editLevel) child.EditLevelAdded = _editLevel;
-      }
-
-      // cascade the call to all deleted child objects
-      for (int index = DeletedList.Count - 1; index >= 0; index--)
-      {
-        C child = DeletedList[index];
-        child.AcceptChanges(_editLevel, false);
-        // if item is below its point of addition, remove
-        if (child.EditLevelAdded > _editLevel)
-          DeletedList.RemoveAt(index);
-      }
-    }
-
-#endregion
-
 #region Delete and Undelete child
 
     private MobileList<C> _deletedList;
@@ -416,8 +187,6 @@ namespace Csla
 
     private void DeleteChild(C child)
     {
-      // set child edit level
-      Core.UndoableBase.ResetChildEditLevel(child, this.EditLevel, false);
       // mark the object as deleted
       child.DeleteChild();
       // and add it to the deleted collection for storage
@@ -430,12 +199,8 @@ namespace Csla
       // the deleted collection
       DeletedList.Remove(child);
 
-      // we are inserting an _existing_ object so
-      // we need to preserve the object's editleveladded value
-      // because it will be changed by the normal add process
-      int saveLevel = child.EditLevelAdded;
       Add(child);
-      child.EditLevelAdded = saveLevel;
+
     }
 
     /// <summary>
@@ -498,21 +263,18 @@ namespace Csla
     {
       // set parent reference
       item.SetParent(this);
-      // set child edit level
-      Core.UndoableBase.ResetChildEditLevel(item, this.EditLevel, false);
-      // when an object is inserted we assume it is
-      // a new object and so the edit level when it was
-      // added must be set
-      item.EditLevelAdded = _editLevel;
+      
       base.InsertItem(index, item);
     }
 
-    /// <summary>
-    /// Marks the child object for deletion and moves it to
-    /// the collection of deleted objects.
-    /// </summary>
-    /// <param name="index">Index of the item to remove.</param>
-    protected override void RemoveItem(int index)
+        private bool _completelyRemoveChild;
+
+        /// <summary>
+        /// Marks the child object for deletion and moves it to
+        /// the collection of deleted objects.
+        /// </summary>
+        /// <param name="index">Index of the item to remove.</param>
+        protected override void RemoveItem(int index)
     {
       // when an object is 'removed' it is really
       // being deleted, so do the deletion work
@@ -572,11 +334,6 @@ namespace Csla
         this.RaiseListChangedEvents = false;
         // set parent reference
         item.SetParent(this);
-        // set child edit level
-        Core.UndoableBase.ResetChildEditLevel(item, this.EditLevel, false);
-        // reset EditLevelAdded 
-        item.EditLevelAdded = this.EditLevel;
-
         // add to list
         base.SetItem(index, item);
       }
@@ -635,30 +392,6 @@ namespace Csla
           break;
         }
       return result;
-    }
-
-#endregion
-
-#region Edit level tracking
-
-    // keep track of how many edit levels we have
-    private int _editLevel;
-
-    /// <summary>
-    /// Returns the current edit level of the object.
-    /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    protected int EditLevel
-    {
-      get { return _editLevel; }
-    }
-
-    int Core.IUndoableObject.EditLevel
-    {
-      get
-      {
-        return this.EditLevel;
-      }
     }
 
 #endregion
@@ -861,9 +594,6 @@ namespace Csla
       T result;
       if (this.IsChild)
         throw new InvalidOperationException(Resources.NoSaveChildException);
-
-      if (_editLevel > 0)
-        throw new InvalidOperationException(Resources.NoSaveEditingException);
 
       if (!IsValid)
         throw new Rules.ValidationException(Resources.NoSaveInvalidException);
@@ -1330,7 +1060,6 @@ namespace Csla
     protected override void OnSetState(Csla.Serialization.Mobile.SerializationInfo info)
     {
       _isChild = info.GetValue<bool>("Csla.BusinessListBase._isChild");
-      _editLevel = info.GetValue<int>("Csla.BusinessListBase._editLevel");
       base.OnSetState(info);
     }
 
@@ -1345,7 +1074,6 @@ namespace Csla
     protected override void OnGetState(Csla.Serialization.Mobile.SerializationInfo info)
     {
       info.AddValue("Csla.BusinessListBase._isChild", _isChild);
-      info.AddValue("Csla.BusinessListBase._editLevel", _editLevel);
       base.OnGetState(info);
     }
 

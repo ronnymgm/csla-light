@@ -19,17 +19,8 @@ namespace Csla.Core
   /// so as to not clutter up the native interface of
   /// the collection objects.
   /// </remarks>
-  public interface IEditableBusinessObject : IBusinessObject, ISupportUndo, IUndoableObject, ITrackStatus
+  public interface IEditableBusinessObject : IBusinessObject, ITrackStatus
   {
-    /// <summary>
-    /// For internal use only!!
-    /// </summary>
-    /// <remarks>
-    /// Altering this value will almost certainly
-    /// break your code. This property is for use
-    /// by the parent collection only!
-    /// </remarks>
-    int EditLevelAdded { get; set;}
     /// <summary>
     /// Called by a parent object to mark the child
     /// for deferred deletion.

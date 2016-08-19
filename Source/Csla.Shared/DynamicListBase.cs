@@ -399,19 +399,12 @@ namespace Csla
         return true;
       }
     }
-
-    void Csla.Core.IParent.ApplyEditChild(Core.IEditableBusinessObject child)
-    {
-      if (child.EditLevel == 0)
-        SaveItem((T)child);
-    }
-
+          
     void Csla.Core.IParent.RemoveChild(Core.IEditableBusinessObject child)
     {
       // do nothing, removal of a child is handled by
       // the RemoveItem override
     }
-
 
     IParent  Csla.Core.IParent.Parent
     {

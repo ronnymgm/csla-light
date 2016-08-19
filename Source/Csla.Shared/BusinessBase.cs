@@ -175,8 +175,6 @@ namespace Csla
       T result;
       if (this.IsChild)
         throw new InvalidOperationException(Resources.NoSaveChildException);
-      if (EditLevel > 0)
-        throw new InvalidOperationException(Resources.NoSaveEditingException);
       if (!IsValid && !IsDeleted)
         throw new Rules.ValidationException(Resources.NoSaveInvalidException);
       if (IsBusy)

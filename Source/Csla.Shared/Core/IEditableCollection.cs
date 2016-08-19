@@ -17,7 +17,7 @@ namespace Csla.Core
   /// so as to not clutter up the native interface of
   /// the collection objects.
   /// </remarks>
-  public interface IEditableCollection : IBusinessObject, ISupportUndo, ITrackStatus
+  public interface IEditableCollection : IBusinessObject, ITrackStatus
   {
     /// <summary>
     /// Removes the specified child from the parent
