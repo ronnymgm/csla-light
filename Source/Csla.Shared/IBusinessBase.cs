@@ -17,7 +17,6 @@ namespace Csla
     ICloneable,
     INotifyPropertyChanged,
     ISavable,
-    IAuthorizeReadWrite,
     IParent,
     IHostRules,
     ICheckRules,

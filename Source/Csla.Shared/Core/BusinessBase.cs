@@ -40,7 +40,6 @@ namespace Csla.Core
     public abstract class BusinessBase : Csla.Core.BindableBase,
       IEditableBusinessObject,
       ICloneable,
-      IAuthorizeReadWrite,
       IParent,
       IDataPortalTarget,
       IManageProperties,
@@ -432,270 +431,6 @@ namespace Csla.Core
                     auth = Csla.Rules.BusinessRules.HasPermission(Rules.AuthorizationActions.EditObject, this);
                 return (auth && IsDirty && IsValid && !IsBusy);
             }
-        }
-
-        #endregion
-
-        #region Authorization
-
-        [NotUndoable]
-        [NonSerialized]
-        private ConcurrentDictionary<string, bool> _readResultCache;
-        [NotUndoable]
-        [NonSerialized]
-        private ConcurrentDictionary<string, bool> _writeResultCache;
-        [NotUndoable]
-        [NonSerialized]
-        private ConcurrentDictionary<string, bool> _executeResultCache;
-        [NotUndoable]
-        [NonSerialized]
-        private System.Security.Principal.IPrincipal _lastPrincipal;
-
-        /// <summary>
-        /// Returns true if the user is allowed to read the
-        /// calling property.
-        /// </summary>
-        /// <param name="property">Property to check.</param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public virtual bool CanReadProperty(Csla.Core.IPropertyInfo property)
-        {
-            var result = true;
-
-            VerifyAuthorizationCache();
-
-            if (!_readResultCache.TryGetValue(property.Name, out result))
-            {
-                result = BusinessRules.HasPermission(AuthorizationActions.ReadProperty, property);
-                if (BusinessRules.CachePermissionResult(AuthorizationActions.ReadProperty, property))
-                {
-                    // store value in cache
-                    _readResultCache.AddOrUpdate(property.Name, result, (a, b) => { return result; });
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to read the
-        /// calling property.
-        /// </summary>
-        /// <returns>true if read is allowed.</returns>
-        /// <param name="property">Property to read.</param>
-        /// <param name="throwOnFalse">Indicates whether a negative
-        /// result should cause an exception.</param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public bool CanReadProperty(Csla.Core.IPropertyInfo property, bool throwOnFalse)
-        {
-            bool result = CanReadProperty(property);
-            if (throwOnFalse && result == false)
-            {
-                Csla.Security.SecurityException ex = new Csla.Security.SecurityException(
-                  String.Format("{0} ({1})",
-                  Resources.PropertyGetNotAllowed, property.Name));
-                throw ex;
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to read the
-        /// specified property.
-        /// </summary>
-        /// <param name="propertyName">Name of the property to read.</param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public bool CanReadProperty(string propertyName)
-        {
-            return CanReadProperty(propertyName, false);
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to read the
-        /// specified property.
-        /// </summary>
-        /// <param name="propertyName">Name of the property to read.</param>
-        /// <param name="throwOnFalse">Indicates whether a negative
-        /// result should cause an exception.</param>
-        private bool CanReadProperty(string propertyName, bool throwOnFalse)
-        {
-            var propertyInfo = FieldManager.GetRegisteredProperties().FirstOrDefault(p => p.Name == propertyName);
-            if (propertyInfo == null)
-            {
-#if NETFX_CORE || (ANDROID || IOS)
-#else
-                Trace.TraceError("CanReadProperty: {0} is not a registered property of {1}.{2}", propertyName, this.GetType().Namespace, this.GetType().Name);
-#endif
-                return true;
-            }
-            return CanReadProperty(propertyInfo, throwOnFalse);
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to write the
-        /// specified property.
-        /// </summary>
-        /// <param name="property">Property to write.</param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public virtual bool CanWriteProperty(Csla.Core.IPropertyInfo property)
-        {
-            bool result = true;
-
-            VerifyAuthorizationCache();
-
-            if (!_writeResultCache.TryGetValue(property.Name, out result))
-            {
-                result = BusinessRules.HasPermission(AuthorizationActions.WriteProperty, property);
-                if (BusinessRules.CachePermissionResult(AuthorizationActions.WriteProperty, property))
-                {
-                    // store value in cache
-                    _writeResultCache.AddOrUpdate(property.Name, result, (a, b) => { return result; });
-                }
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to write the
-        /// calling property.
-        /// </summary>
-        /// <returns>true if write is allowed.</returns>
-        /// <param name="property">Property to write.</param>
-        /// <param name="throwOnFalse">Indicates whether a negative
-        /// result should cause an exception.</param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public bool CanWriteProperty(Csla.Core.IPropertyInfo property, bool throwOnFalse)
-        {
-            bool result = CanWriteProperty(property);
-            if (throwOnFalse && result == false)
-            {
-                Csla.Security.SecurityException ex = new Csla.Security.SecurityException(
-                  String.Format("{0} ({1})", Resources.PropertySetNotAllowed, property.Name));
-                throw ex;
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to write the
-        /// specified property.
-        /// </summary>
-        /// <param name="propertyName">Name of the property to write.</param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public bool CanWriteProperty(string propertyName)
-        {
-            return CanWriteProperty(propertyName, false);
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to write the
-        /// specified property.
-        /// </summary>
-        /// <param name="propertyName">Name of the property to write.</param>
-        /// <param name="throwOnFalse">Indicates whether a negative
-        /// result should cause an exception.</param>
-        private bool CanWriteProperty(string propertyName, bool throwOnFalse)
-        {
-            var propertyInfo = FieldManager.GetRegisteredProperties().FirstOrDefault(p => p.Name == propertyName);
-            if (propertyInfo == null)
-            {
-#if NETFX_CORE || (ANDROID || IOS)
-#else
-                Trace.TraceError("CanReadProperty: {0} is not a registered property of {1}.{2}", propertyName, this.GetType().Namespace, this.GetType().Name);
-#endif
-                return true;
-            }
-            return CanWriteProperty(propertyInfo, throwOnFalse);
-        }
-
-        private void VerifyAuthorizationCache()
-        {
-            if (_readResultCache == null)
-                _readResultCache = new ConcurrentDictionary<string, bool>();
-            if (_writeResultCache == null)
-                _writeResultCache = new ConcurrentDictionary<string, bool>();
-            if (_executeResultCache == null)
-                _executeResultCache = new ConcurrentDictionary<string, bool>();
-            if (!ReferenceEquals(Csla.ApplicationContext.User, _lastPrincipal))
-            {
-                // the principal has changed - reset the cache
-                _readResultCache.Clear();
-                _writeResultCache.Clear();
-                _executeResultCache.Clear();
-                _lastPrincipal = Csla.ApplicationContext.User;
-            }
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to execute
-        /// the specified method.
-        /// </summary>
-        /// <param name="method">Method to execute.</param>
-        /// <returns>true if execute is allowed.</returns>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public virtual bool CanExecuteMethod(Csla.Core.IMemberInfo method)
-        {
-            bool result = true;
-
-            VerifyAuthorizationCache();
-
-            if (!_executeResultCache.TryGetValue(method.Name, out result))
-            {
-                result = BusinessRules.HasPermission(AuthorizationActions.ExecuteMethod, method);
-                if (BusinessRules.CachePermissionResult(AuthorizationActions.ExecuteMethod, method))
-                {
-                    // store value in cache
-                    _executeResultCache.AddOrUpdate(method.Name, result, (a, b) => { return result; });
-                }
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Returns true if the user is allowed to execute
-        /// the specified method.
-        /// </summary>
-        /// <returns>true if execute is allowed.</returns>
-        /// <param name="method">Method to execute.</param>
-        /// <param name="throwOnFalse">Indicates whether a negative
-        /// result should cause an exception.</param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public bool CanExecuteMethod(Csla.Core.IMemberInfo method, bool throwOnFalse)
-        {
-
-            bool result = CanExecuteMethod(method);
-            if (throwOnFalse && result == false)
-            {
-                Csla.Security.SecurityException ex =
-                  new Csla.Security.SecurityException(string.Format("{0} ({1})", Properties.Resources.MethodExecuteNotAllowed, method.Name));
-                throw ex;
-            }
-            return result;
-
-        }
-
-
-        /// <summary>
-        /// Returns true if the user is allowed to execute
-        /// the specified method.
-        /// </summary>
-        /// <param name="methodName">Name of the method to execute.</param>
-        /// <returns>true if execute is allowed.</returns>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public virtual bool CanExecuteMethod(string methodName)
-        {
-            return CanExecuteMethod(methodName, false);
-        }
-
-        private bool CanExecuteMethod(string methodName, bool throwOnFalse)
-        {
-
-            bool result = CanExecuteMethod(new MethodInfo(methodName));
-            if (throwOnFalse && result == false)
-            {
-                Csla.Security.SecurityException ex = new Csla.Security.SecurityException(string.Format("{0} ({1})", Properties.Resources.MethodExecuteNotAllowed, methodName));
-                throw ex;
-            }
-            return result;
         }
 
         #endregion
@@ -1411,10 +1146,7 @@ namespace Csla.Core
 
             #endregion
 
-            if (_bypassPropertyChecks || CanReadProperty(propertyInfo, noAccess == Security.NoAccessBehavior.ThrowException))
-                return field;
-
-            return defaultValue;
+            return field;
         }
 
         /// <summary>
@@ -1597,10 +1329,9 @@ namespace Csla.Core
         protected P GetProperty<P>(PropertyInfo<P> propertyInfo, Security.NoAccessBehavior noAccess)
         {
             P result = default(P);
-            if (_bypassPropertyChecks || CanReadProperty(propertyInfo, noAccess == Csla.Security.NoAccessBehavior.ThrowException))
-                result = ReadProperty<P>(propertyInfo);
-            else
-                result = propertyInfo.DefaultValue;
+
+            result = ReadProperty<P>(propertyInfo);
+
             return result;
         }
 
@@ -1617,15 +1348,10 @@ namespace Csla.Core
         protected object GetProperty(IPropertyInfo propertyInfo)
         {
             object result = null;
-            if (_bypassPropertyChecks || CanReadProperty(propertyInfo, false))
-            {
-                // call ReadProperty (may be overloaded in actual class)
-                result = ReadProperty(propertyInfo);
-            }
-            else
-            {
-                result = propertyInfo.DefaultValue;
-            }
+
+            // call ReadProperty (may be overloaded in actual class)
+            result = ReadProperty(propertyInfo);
+
             return result;
         }
 
@@ -1973,28 +1699,27 @@ namespace Csla.Core
 
                 #endregion
 
-                if (_bypassPropertyChecks || CanWriteProperty(propertyInfo, noAccess == Security.NoAccessBehavior.ThrowException))
+
+                bool doChange = false;
+                if (field == null)
                 {
-                    bool doChange = false;
-                    if (field == null)
-                    {
-                        if (newValue != null)
-                            doChange = true;
-                    }
-                    else
-                    {
-                        if (typeof(P) == typeof(string) && newValue == null)
-                            newValue = Utilities.CoerceValue<P>(typeof(string), field, string.Empty);
-                        if (!field.Equals(newValue))
-                            doChange = true;
-                    }
-                    if (doChange)
-                    {
-                        if (!_bypassPropertyChecks) OnPropertyChanging(propertyName);
-                        field = newValue;
-                        if (!_bypassPropertyChecks) PropertyHasChanged(propertyName);
-                    }
+                    if (newValue != null)
+                        doChange = true;
                 }
+                else
+                {
+                    if (typeof(P) == typeof(string) && newValue == null)
+                        newValue = Utilities.CoerceValue<P>(typeof(string), field, string.Empty);
+                    if (!field.Equals(newValue))
+                        doChange = true;
+                }
+                if (doChange)
+                {
+                    if (!_bypassPropertyChecks) OnPropertyChanging(propertyName);
+                    field = newValue;
+                    if (!_bypassPropertyChecks) PropertyHasChanged(propertyName);
+                }
+
             }
             catch (System.Security.SecurityException ex)
             {
@@ -2048,28 +1773,26 @@ namespace Csla.Core
 
                 #endregion
 
-                if (_bypassPropertyChecks || CanWriteProperty(propertyInfo, noAccess == Security.NoAccessBehavior.ThrowException))
+                bool doChange = false;
+                if (field == null)
                 {
-                    bool doChange = false;
-                    if (field == null)
-                    {
-                        if (newValue != null)
-                            doChange = true;
-                    }
-                    else
-                    {
-                        if (typeof(V) == typeof(string) && newValue == null)
-                            newValue = Utilities.CoerceValue<V>(typeof(string), null, string.Empty);
-                        if (!field.Equals(newValue))
-                            doChange = true;
-                    }
-                    if (doChange)
-                    {
-                        if (!_bypassPropertyChecks) OnPropertyChanging(propertyName);
-                        field = Utilities.CoerceValue<P>(typeof(V), field, newValue);
-                        if (!_bypassPropertyChecks) PropertyHasChanged(propertyName);
-                    }
+                    if (newValue != null)
+                        doChange = true;
                 }
+                else
+                {
+                    if (typeof(V) == typeof(string) && newValue == null)
+                        newValue = Utilities.CoerceValue<V>(typeof(string), null, string.Empty);
+                    if (!field.Equals(newValue))
+                        doChange = true;
+                }
+                if (doChange)
+                {
+                    if (!_bypassPropertyChecks) OnPropertyChanging(propertyName);
+                    field = Utilities.CoerceValue<P>(typeof(V), field, newValue);
+                    if (!_bypassPropertyChecks) PropertyHasChanged(propertyName);
+                }
+
             }
             catch (System.Security.SecurityException ex)
             {
@@ -2139,27 +1862,25 @@ namespace Csla.Core
         {
             try
             {
-                if (_bypassPropertyChecks || CanWriteProperty(propertyInfo, noAccess == Security.NoAccessBehavior.ThrowException))
+                P oldValue = default(P);
+                var fieldData = FieldManager.GetFieldData(propertyInfo);
+                if (fieldData == null)
                 {
-                    P oldValue = default(P);
-                    var fieldData = FieldManager.GetFieldData(propertyInfo);
-                    if (fieldData == null)
-                    {
-                        oldValue = propertyInfo.DefaultValue;
-                        fieldData = FieldManager.LoadFieldData<P>(propertyInfo, oldValue);
-                    }
-                    else
-                    {
-                        var fd = fieldData as FieldManager.IFieldData<P>;
-                        if (fd != null)
-                            oldValue = fd.Value;
-                        else
-                            oldValue = (P)fieldData.Value;
-                    }
-                    if (typeof(F) == typeof(string) && newValue == null)
-                        newValue = Utilities.CoerceValue<F>(typeof(string), null, string.Empty);
-                    LoadPropertyValue<P>(propertyInfo, oldValue, Utilities.CoerceValue<P>(typeof(F), oldValue, newValue), !_bypassPropertyChecks);
+                    oldValue = propertyInfo.DefaultValue;
+                    fieldData = FieldManager.LoadFieldData<P>(propertyInfo, oldValue);
                 }
+                else
+                {
+                    var fd = fieldData as FieldManager.IFieldData<P>;
+                    if (fd != null)
+                        oldValue = fd.Value;
+                    else
+                        oldValue = (P)fieldData.Value;
+                }
+                if (typeof(F) == typeof(string) && newValue == null)
+                    newValue = Utilities.CoerceValue<F>(typeof(string), null, string.Empty);
+                LoadPropertyValue<P>(propertyInfo, oldValue, Utilities.CoerceValue<P>(typeof(F), oldValue, newValue), !_bypassPropertyChecks);
+
             }
             catch (System.Security.SecurityException ex)
             {
@@ -2193,35 +1914,34 @@ namespace Csla.Core
         /// user is not authorized to change this property.</param>
         protected void SetProperty<P>(PropertyInfo<P> propertyInfo, P newValue, Security.NoAccessBehavior noAccess)
         {
-            if (_bypassPropertyChecks || CanWriteProperty(propertyInfo, noAccess == Security.NoAccessBehavior.ThrowException))
+
+            try
             {
-                try
+                P oldValue = default(P);
+                var fieldData = FieldManager.GetFieldData(propertyInfo);
+                if (fieldData == null)
                 {
-                    P oldValue = default(P);
-                    var fieldData = FieldManager.GetFieldData(propertyInfo);
-                    if (fieldData == null)
-                    {
-                        oldValue = propertyInfo.DefaultValue;
-                        fieldData = FieldManager.LoadFieldData<P>(propertyInfo, oldValue);
-                    }
+                    oldValue = propertyInfo.DefaultValue;
+                    fieldData = FieldManager.LoadFieldData<P>(propertyInfo, oldValue);
+                }
+                else
+                {
+                    var fd = fieldData as FieldManager.IFieldData<P>;
+                    if (fd != null)
+                        oldValue = fd.Value;
                     else
-                    {
-                        var fd = fieldData as FieldManager.IFieldData<P>;
-                        if (fd != null)
-                            oldValue = fd.Value;
-                        else
-                            oldValue = (P)fieldData.Value;
-                    }
-                    if (typeof(P) == typeof(string) && newValue == null)
-                        newValue = Utilities.CoerceValue<P>(typeof(string), null, string.Empty);
-                    LoadPropertyValue<P>(propertyInfo, oldValue, newValue, !_bypassPropertyChecks);
+                        oldValue = (P)fieldData.Value;
                 }
-                catch (Exception ex)
-                {
-                    throw new PropertyLoadException(
-                      string.Format(Properties.Resources.PropertyLoadException, propertyInfo.Name, ex.Message), ex);
-                }
+                if (typeof(P) == typeof(string) && newValue == null)
+                    newValue = Utilities.CoerceValue<P>(typeof(string), null, string.Empty);
+                LoadPropertyValue<P>(propertyInfo, oldValue, newValue, !_bypassPropertyChecks);
             }
+            catch (Exception ex)
+            {
+                throw new PropertyLoadException(
+                  string.Format(Properties.Resources.PropertyLoadException, propertyInfo.Name, ex.Message), ex);
+            }
+
         }
 
         /// <summary>
@@ -2241,12 +1961,9 @@ namespace Csla.Core
         {
             try
             {
-                if (_bypassPropertyChecks || CanWriteProperty(propertyInfo, true))
-                {
-                    if (!_bypassPropertyChecks) OnPropertyChanging(propertyInfo);
-                    FieldManager.SetFieldData(propertyInfo, newValue);
-                    if (!_bypassPropertyChecks) PropertyHasChanged(propertyInfo);
-                }
+                if (!_bypassPropertyChecks) OnPropertyChanging(propertyInfo);
+                FieldManager.SetFieldData(propertyInfo, newValue);
+                if (!_bypassPropertyChecks) PropertyHasChanged(propertyInfo);
             }
             catch (System.Security.SecurityException ex)
             {

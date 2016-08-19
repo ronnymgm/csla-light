@@ -18,10 +18,10 @@ namespace Csla
   public interface IReadOnlyBase
 #if !NETFX_CORE && !(ANDROID || IOS) && !IOS
  : ICloneable, IReadOnlyObject, IBusinessObject, ISerializationNotification,
-    IAuthorizeReadWrite, INotifyBusy, INotifyUnhandledAsyncException, IHostRules,
+    INotifyBusy, INotifyUnhandledAsyncException, IHostRules,
     INotifyPropertyChanged, INotifyPropertyChanging, IMobileObject
 #else
- : IReadOnlyObject, IBusinessObject, ISerializationNotification, IAuthorizeReadWrite, 
+ : IReadOnlyObject, IBusinessObject, ISerializationNotification,  
     INotifyBusy, INotifyUnhandledAsyncException, IHostRules,
     INotifyPropertyChanged, IMobileObject
 #endif
