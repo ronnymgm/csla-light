@@ -102,6 +102,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)DataAnnotations\ValidationResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DataPortal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DataPortalClient\DefaultPortalProxyFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataPortalClient\GZipMessageEncoderFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataPortalClient\GZipMessageEncodingBindingElement.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataPortalClient\GZipMessageEncodingBindingElementImporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DataPortalClient\HttpProxy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DataPortalClient\IDataPortalProxy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DataPortalClient\IDataPortalProxyFactory.cs" />
