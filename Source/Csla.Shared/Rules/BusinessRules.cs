@@ -812,7 +812,7 @@ namespace Csla.Rules
     public void AddDataAnnotations()
     {
       Type metadataType;
-#if !(ANDROID || IOS) && !NETFX_CORE
+#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
       // add data annotations from metadata class if specified
       var classAttList = _target.GetType().GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.MetadataTypeAttribute), true);
       if (classAttList.Length > 0) 
@@ -1050,7 +1050,7 @@ namespace Csla.Rules
     #region Get All Broken Rules (tree)
 
     /// <summary>
-    /// Gets all nodes in tree thar have IsValid = false (and all parents) 
+    /// Gets all nodes in tree that have IsValid = false (and all parents) 
     /// </summary>
     /// <param name="root">The root.</param>
     /// <returns>BrukenRulesTree list</returns>

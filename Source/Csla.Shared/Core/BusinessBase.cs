@@ -57,14 +57,15 @@ namespace Csla.Core
 
         #region Constructors
 
-        /// <summary>
-        /// Creates an instance of the object.
-        /// </summary>
-        protected BusinessBase()
-        {
-            Initialize();
-            InitializeBusinessRules();
-        }
+    /// <summary>
+    /// Creates an instance of the object.
+    /// </summary>
+    protected BusinessBase()
+    {
+      InitializeIdentity();
+      Initialize();
+      InitializeBusinessRules();
+    }
 
         #endregion
 
@@ -78,7 +79,41 @@ namespace Csla.Core
         protected virtual void Initialize()
         { /* allows subclass to initialize events before any other activity occurs */ }
 
-        #endregion
+    #endregion
+
+    #region Identity
+
+    private int _identity = -1;
+
+    int IBusinessObject.Identity
+    {
+      get { return _identity; }
+    }
+
+    private void InitializeIdentity()
+    {
+      _identity = ((IParent)this).GetNextIdentity(_identity);
+    }
+
+    [NonSerialized]
+    [NotUndoable]
+    private IdentityManager _identityManager;
+
+    int IParent.GetNextIdentity(int current)
+    {
+      if (this.Parent != null)
+      {
+        return this.Parent.GetNextIdentity(current);
+      }
+      else
+      {
+        if (_identityManager == null)
+          _identityManager = new IdentityManager();
+        return _identityManager.GetNextIdentity(current);
+      }
+    }
+    
+    #endregion
 
         #region Parent/Child link
 
@@ -101,16 +136,18 @@ namespace Csla.Core
             get { return _parent; }
         }
 
-        /// <summary>
-        /// Used by BusinessListBase as a child object is 
-        /// created to tell the child object about its
-        /// parent.
-        /// </summary>
-        /// <param name="parent">A reference to the parent collection object.</param>
-        protected virtual void SetParent(Core.IParent parent)
-        {
-            _parent = parent;
-        }
+    /// <summary>
+    /// Used by BusinessListBase as a child object is 
+    /// created to tell the child object about its
+    /// parent.
+    /// </summary>
+    /// <param name="parent">A reference to the parent collection object.</param>
+    protected virtual void SetParent(Core.IParent parent)
+    {
+      _parent = parent;
+      _identityManager = null;
+      InitializeIdentity();
+    }
 
         #endregion
 
@@ -450,13 +487,14 @@ namespace Csla.Core
             get { return _isChild; }
         }
 
-        /// <summary>
-        /// Marks the object as being a child object.
-        /// </summary>
-        protected void MarkAsChild()
-        {
-            _isChild = true;
-        }
+    /// <summary>
+    /// Marks the object as being a child object.
+    /// </summary>
+    protected void MarkAsChild()
+    {
+      _identity = -1;
+      _isChild = true;
+    }
 
         #endregion
 
@@ -2923,45 +2961,47 @@ namespace Csla.Core
 
         #region MobileFormatter
 
-        /// <summary>
-        /// Override this method to insert your field values
-        /// into the MobileFormatter serialzation stream.
-        /// </summary>
-        /// <param name="info">
-        /// Object containing the data to serialize.
-        /// </param>
-        /// <param name="mode">
-        /// The StateMode indicating why this method was invoked.
-        /// </param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        protected override void OnGetState(Csla.Serialization.Mobile.SerializationInfo info, StateMode mode)
-        {
-            base.OnGetState(info, mode);
-            info.AddValue("Csla.Core.BusinessBase._isNew", _isNew);
-            info.AddValue("Csla.Core.BusinessBase._isDeleted", _isDeleted);
-            info.AddValue("Csla.Core.BusinessBase._isDirty", _isDirty);
-            info.AddValue("Csla.Core.BusinessBase._isChild", _isChild);
-        }
+    /// <summary>
+    /// Override this method to insert your field values
+    /// into the MobileFormatter serialzation stream.
+    /// </summary>
+    /// <param name="info">
+    /// Object containing the data to serialize.
+    /// </param>
+    /// <param name="mode">
+    /// The StateMode indicating why this method was invoked.
+    /// </param>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    protected override void OnGetState(Csla.Serialization.Mobile.SerializationInfo info, StateMode mode)
+    {
+      base.OnGetState(info, mode);
+      info.AddValue("Csla.Core.BusinessBase._isNew", _isNew);
+      info.AddValue("Csla.Core.BusinessBase._isDeleted", _isDeleted);
+      info.AddValue("Csla.Core.BusinessBase._isDirty", _isDirty);
+      info.AddValue("Csla.Core.BusinessBase._isChild", _isChild);
+      info.AddValue("Csla.Core.BusinessBase._identity", _identity);
+    }
 
-        /// <summary>
-        /// Override this method to retrieve your field values
-        /// from the MobileFormatter serialzation stream.
-        /// </summary>
-        /// <param name="info">
-        /// Object containing the data to serialize.
-        /// </param>
-        /// <param name="mode">
-        /// The StateMode indicating why this method was invoked.
-        /// </param>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        protected override void OnSetState(Csla.Serialization.Mobile.SerializationInfo info, StateMode mode)
-        {
-            base.OnSetState(info, mode);
-            _isNew = info.GetValue<bool>("Csla.Core.BusinessBase._isNew");
-            _isDeleted = info.GetValue<bool>("Csla.Core.BusinessBase._isDeleted");
-            _isDirty = info.GetValue<bool>("Csla.Core.BusinessBase._isDirty");
-            _isChild = info.GetValue<bool>("Csla.Core.BusinessBase._isChild");
-        }
+    /// <summary>
+    /// Override this method to retrieve your field values
+    /// from the MobileFormatter serialzation stream.
+    /// </summary>
+    /// <param name="info">
+    /// Object containing the data to serialize.
+    /// </param>
+    /// <param name="mode">
+    /// The StateMode indicating why this method was invoked.
+    /// </param>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    protected override void OnSetState(Csla.Serialization.Mobile.SerializationInfo info, StateMode mode)
+    {
+      base.OnSetState(info, mode);
+      _isNew = info.GetValue<bool>("Csla.Core.BusinessBase._isNew");
+      _isDeleted = info.GetValue<bool>("Csla.Core.BusinessBase._isDeleted");
+      _isDirty = info.GetValue<bool>("Csla.Core.BusinessBase._isDirty");
+      _isChild = info.GetValue<bool>("Csla.Core.BusinessBase._isChild");
+      _identity = info.GetValue<int>("Csla.Core.BusinessBase._identity");
+    }
 
         /// <summary>
         /// Override this method to insert your child object
@@ -3151,7 +3191,7 @@ namespace Csla.Core
 #if NETFX_CORE
         #region UndoableBase overrides
 
-#if !NETSTANDARD1_6
+#if !NETSTANDARD1_6 && !WINDOWS_UWP
     /// <summary>
     /// Copy object state.
     /// </summary>
