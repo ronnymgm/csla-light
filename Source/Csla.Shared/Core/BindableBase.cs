@@ -113,12 +113,15 @@ namespace Csla.Core
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected virtual void OnPropertyChanged(string propertyName)
     {
-      if (_nonSerializableChangedHandlers != null)
-        _nonSerializableChangedHandlers.Invoke(this,
-          new PropertyChangedEventArgs(propertyName));
-      if (_serializableChangedHandlers != null)
-        _serializableChangedHandlers.Invoke(this,
-          new PropertyChangedEventArgs(propertyName));
+      if (ApplicationContext.PropertyChangedMode != ApplicationContext.PropertyChangedModes.None)
+      {
+        if (_nonSerializableChangedHandlers != null)
+          _nonSerializableChangedHandlers.Invoke(this,
+            new PropertyChangedEventArgs(propertyName));
+        if (_serializableChangedHandlers != null)
+          _serializableChangedHandlers.Invoke(this,
+            new PropertyChangedEventArgs(propertyName));
+      }
     }
 
     /// <summary>
@@ -278,12 +281,15 @@ namespace Csla.Core
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected virtual void OnPropertyChanging(string propertyName)
     {
-      if (_nonSerializableChangingHandlers != null)
-        _nonSerializableChangingHandlers.Invoke(this,
-          new PropertyChangingEventArgs(propertyName));
-      if (_serializableChangingHandlers != null)
-        _serializableChangingHandlers.Invoke(this,
-          new PropertyChangingEventArgs(propertyName));
+      if (ApplicationContext.PropertyChangedMode != ApplicationContext.PropertyChangedModes.None)
+      {
+        if (_nonSerializableChangingHandlers != null)
+          _nonSerializableChangingHandlers.Invoke(this,
+            new PropertyChangingEventArgs(propertyName));
+        if (_serializableChangingHandlers != null)
+          _serializableChangingHandlers.Invoke(this,
+            new PropertyChangingEventArgs(propertyName));
+      }
     }
 
     /// <summary>

@@ -596,7 +596,7 @@ namespace Csla
         {
           string tmp = ConfigurationManager.AppSettings["CslaPropertyChangedMode"];
           if (string.IsNullOrEmpty(tmp))
-            tmp = "Xaml";
+            tmp = "None";
           _propertyChangedMode = (PropertyChangedModes)
             Enum.Parse(typeof(PropertyChangedModes), tmp);
           _propertyChangedModeSet = true;
@@ -619,6 +619,10 @@ namespace Csla
     /// </summary>
     public enum PropertyChangedModes
     {
+      /// <summary>
+      /// Do not Raise PropertyChanged events
+      /// </summary>
+      None,
       /// <summary>
       /// Raise PropertyChanged events as required
       /// by Windows Forms data binding.

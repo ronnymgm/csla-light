@@ -116,16 +116,6 @@ namespace Csla
 
     #region Authorization
 
-    [NotUndoable()]
-    [NonSerialized()]
-    private ConcurrentDictionary<string, bool> _readResultCache;
-    [NotUndoable()]
-    [NonSerialized()]
-    private ConcurrentDictionary<string, bool> _executeResultCache;
-    [NotUndoable()]
-    [NonSerialized()]
-    private System.Security.Principal.IPrincipal _lastPrincipal;
-
     private void InitializeBusinessRules()
     {
       var rules = BusinessRuleManager.GetRulesForType(this.GetType());
