@@ -49,7 +49,7 @@ namespace Csla
     ObservableBindingList<T>,
 #endif
     Core.IParent, Csla.Server.IDataPortalTarget, ISerializationNotification, IBusinessObject
-    where T : Core.IEditableBusinessObject, Core.IUndoableObject, Core.ISavable, IMobileObject, IBusinessObject
+    where T : Core.IEditableBusinessObject, Core.ISavable, IMobileObject, IBusinessObject
   {
     /// <summary>
     /// Creates an instance of the object.
@@ -168,12 +168,7 @@ namespace Csla
           MethodCaller.CallMethodIfImplemented(item, "MarkBusy");
           handleBusy = true;
         }
-
-        // commit all changes
-        int editLevel = savable.EditLevel;
-        for (int tmp = 1; tmp <= editLevel; tmp++)
-          savable.AcceptChanges(editLevel - tmp, false);
-
+        
         if (delete)
           savable.Delete();
 
@@ -210,9 +205,6 @@ namespace Csla
           }
           else
           {
-            for (int tmp = 1; tmp <= editLevel; tmp++)
-              result.CopyState(tmp, false);
-
             SafeSetItem(index, result);
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this[index], index));

@@ -81,7 +81,7 @@ namespace Csla
     Core.IParent,
     Server.IDataPortalTarget,
     IBusinessObject
-    where T : Core.IEditableBusinessObject, Core.IUndoableObject, Core.ISavable, IMobileObject, IBusinessObject
+    where T : Core.IEditableBusinessObject, Core.ISavable, IMobileObject, IBusinessObject
     {
     /// <summary>
     /// Creates an instance of the object.
@@ -192,20 +192,11 @@ namespace Csla
         if (clonable != null)
           savable = (T)clonable.Clone();
 
-        // commit all changes
-        int editLevel = savable.EditLevel;
-        for (int tmp = 1; tmp <= editLevel; tmp++)
-          savable.AcceptChanges(editLevel - tmp, false);
-
         // do the save
         result = (T)savable.Save();
 
         if (!ReferenceEquals(result, item))
         {
-          // restore edit level to previous level
-          for (int tmp = 1; tmp <= editLevel; tmp++)
-            result.CopyState(tmp, false);
-
           // put result into collection
           this[index] = result;
         }
