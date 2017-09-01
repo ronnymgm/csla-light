@@ -3,13 +3,17 @@
 //----------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.ServiceModel.Description;
 using System.Xml;
+using System.Collections.Generic;
+#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
+using System.ServiceModel.Description;
+#endif
+
 
 namespace Csla.DataPortalClient
 {
-    public class GZipMessageEncodingBindingElementImporter : IPolicyImportExtension
+#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
+  public class GZipMessageEncodingBindingElementImporter : IPolicyImportExtension
     {
         public GZipMessageEncodingBindingElementImporter()
         {
@@ -41,5 +45,6 @@ namespace Csla.DataPortalClient
             }
         }
     }
+#endif
 }
 

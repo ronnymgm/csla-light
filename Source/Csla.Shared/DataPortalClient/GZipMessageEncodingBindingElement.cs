@@ -4,11 +4,14 @@
 
 using System;
 using System.Configuration;
+using System.Xml;
+#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
 using System.ServiceModel.Channels;
 using System.ServiceModel.Configuration;
 using System.ServiceModel.Description;
-using System.Xml;
 using System.ComponentModel;
+#endif
+
 
 namespace Csla.DataPortalClient
 {
@@ -20,8 +23,10 @@ namespace Csla.DataPortalClient
         public const string GZipEncodingPrefix = "gzip";
     }
 
-    //This is the binding element that, when plugged into a custom binding, will enable the GZip encoder
-    public sealed class GZipMessageEncodingBindingElement
+#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
+
+  //This is the binding element that, when plugged into a custom binding, will enable the GZip encoder
+  public sealed class GZipMessageEncodingBindingElement
                         : MessageEncodingBindingElement //BindingElement
                         , IPolicyExportExtension
     {
@@ -228,4 +233,6 @@ namespace Csla.DataPortalClient
             return bindingElement;
         }
     }
+
+#endif
 }

@@ -5,12 +5,15 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
 using System.ServiceModel.Channels;
+#endif
 
 namespace Csla.DataPortalClient
 {
-    //This class is used to create the custom encoder (GZipMessageEncoder)
-    internal class GZipMessageEncoderFactory : MessageEncoderFactory
+#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
+  //This class is used to create the custom encoder (GZipMessageEncoder)
+  internal class GZipMessageEncoderFactory : MessageEncoderFactory
     {
         MessageEncoder encoder;
 
@@ -172,4 +175,5 @@ namespace Csla.DataPortalClient
             }
         }
     }
+#endif
 }
