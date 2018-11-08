@@ -130,6 +130,9 @@ namespace Csla.Core
     /// </remarks>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public Core.IParent Parent
     {
@@ -173,6 +176,9 @@ namespace Csla.Core
     /// <returns>A value indicating if this object is new.</returns>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public bool IsNew
     {
       get { return _isNew; }
@@ -194,6 +200,9 @@ namespace Csla.Core
     /// <returns>A value indicating if this object is marked for deletion.</returns>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public bool IsDeleted
     {
       get { return _isDeleted; }
@@ -220,6 +229,9 @@ namespace Csla.Core
     /// <returns>A value indicating if this object's data has been changed.</returns>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsDirty
     {
       get { return IsSelfDirty || (_fieldManager != null && FieldManager.IsDirty()); }
@@ -244,6 +256,9 @@ namespace Csla.Core
     /// <returns>A value indicating if this object's data has been changed.</returns>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsSelfDirty
     {
       get { return _isDirty; }
@@ -388,7 +403,7 @@ namespace Csla.Core
     protected virtual void MetaPropertyHasChanged(string name)
     {
       if (ApplicationContext.PropertyChangedMode != ApplicationContext.PropertyChangedModes.Windows)
-        OnPropertyChanged(name);
+        OnMetaPropertyChanged(name);
     }
 
     /// <summary>
@@ -455,6 +470,9 @@ namespace Csla.Core
     /// <returns>A value indicating if this object is both dirty and valid.</returns>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsSavable
     {
       get
@@ -482,6 +500,9 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public bool IsChild
     {
       get { return _isChild; }
@@ -496,9 +517,9 @@ namespace Csla.Core
       _isChild = true;
     }
 
-    #endregion
+#endregion
 
-    #region Delete
+#region Delete
 
     /// <summary>
     /// Marks the object for deletion. The object will be deleted as part of the
@@ -535,7 +556,7 @@ namespace Csla.Core
       MarkDeleted();
     }
 
-    #endregion
+#endregion
 
     #region ICloneable
 
@@ -556,9 +577,9 @@ namespace Csla.Core
       return ObjectCloner.Clone(this);
     }
 
-    #endregion
+#endregion
 
-    #region BusinessRules, IsValid
+#region BusinessRules, IsValid
 
 #if (ANDROID || IOS) || NETFX_CORE
     /// <summary>
@@ -726,6 +747,9 @@ namespace Csla.Core
     /// <returns>A value indicating if the object is currently valid.</returns>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsValid
     {
       get { return IsSelfValid && (_fieldManager == null || FieldManager.IsValid()); }
@@ -748,6 +772,9 @@ namespace Csla.Core
     /// <returns>A value indicating if the object is currently valid.</returns>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsSelfValid
     {
       get { return BusinessRules.IsValid; }
@@ -759,15 +786,21 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#if !NET40
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+#endif
+#endif
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public virtual Rules.BrokenRulesCollection BrokenRulesCollection
     {
       get { return BusinessRules.GetBrokenRules(); }
     }
 
-    #endregion
+#endregion
 
-    #region Data Access
+#region Data Access
 
     /// <summary>
     /// Override this method to load a new business object with default
@@ -874,10 +907,10 @@ namespace Csla.Core
     protected virtual void Child_OnDataPortalException(DataPortalEventArgs e, Exception ex)
     { }
 
-    #endregion
+#endregion
 
 #if (!(ANDROID || IOS) && !NETFX_CORE) || ANDROID || IOS
-    #region IDataErrorInfo
+#region IDataErrorInfo
 
     string IDataErrorInfo.Error
     {
@@ -907,17 +940,17 @@ namespace Csla.Core
       }
     }
 
-    #endregion
+#endregion
 #endif
 
-    #region Serialization Notification
+#region Serialization Notification
 
     void ISerializationNotification.Deserialized()
     {
       OnDeserializedHandler(new System.Runtime.Serialization.StreamingContext());
     }
 
-#if !NETFX_CORE || PCL46 || WINDOWS_UWP
+#if !NETFX_CORE || PCL46 || WINDOWS_UWP || PCL259
     [System.Runtime.Serialization.OnDeserialized]
 #endif
     private void OnDeserializedHandler(System.Runtime.Serialization.StreamingContext context)
@@ -940,9 +973,9 @@ namespace Csla.Core
     protected virtual void OnDeserialized(System.Runtime.Serialization.StreamingContext context)
     { }
 
-    #endregion
+#endregion
 
-    #region Bubbling event Hooks
+#region Bubbling event Hooks
 
     /// <summary>
     /// For internal use.
@@ -1032,9 +1065,9 @@ namespace Csla.Core
         cc.ChildChanged -= Child_Changed;
     }
 
-    #endregion
+#endregion
 
-    #region Busy / Unhandled exception bubbling
+#region Busy / Unhandled exception bubbling
 
     private void Child_UnhandledAsyncException(object sender, ErrorEventArgs e)
     {
@@ -1046,9 +1079,9 @@ namespace Csla.Core
       OnBusyChanged(e);
     }
 
-    #endregion
+#endregion
 
-    #region IEditableBusinessObject Members
+#region IEditableBusinessObject Members
 
     void IEditableBusinessObject.DeleteChild()
     {
@@ -1060,9 +1093,9 @@ namespace Csla.Core
       this.SetParent(parent);
     }
 
-    #endregion
+#endregion
 
-    #region Register Methods
+#region Register Methods
 
     /// <summary>
     /// Indicates that the specified method belongs
@@ -1105,9 +1138,9 @@ namespace Csla.Core
       return info;
     }
 
-    #endregion
+#endregion
 
-    #region  Register Properties
+#region  Register Properties
 
     /// <summary>
     /// Indicates that the specified property belongs
@@ -1130,9 +1163,9 @@ namespace Csla.Core
       return Core.FieldManager.PropertyInfoManager.RegisterProperty<P>(objectType, info);
     }
 
-    #endregion
+#endregion
 
-    #region  Get Properties
+#region  Get Properties
 
     /// <summary>
     /// Gets a property's value, first checking authorization.
@@ -1175,14 +1208,14 @@ namespace Csla.Core
     /// user is not authorized to read this property.</param>
     protected P GetProperty<P>(string propertyName, P field, P defaultValue, Security.NoAccessBehavior noAccess)
     {
-      #region Check to see if the property is marked with RelationshipTypes.PrivateField
+#region Check to see if the property is marked with RelationshipTypes.PrivateField
 
       var propertyInfo = FieldManager.GetRegisteredProperty(propertyName);
 
       if ((propertyInfo.RelationshipType & RelationshipTypes.PrivateField) != RelationshipTypes.PrivateField)
         throw new InvalidOperationException(Resources.PrivateFieldException);
 
-      #endregion
+#endregion
 
       return field;
     }
@@ -1435,6 +1468,8 @@ namespace Csla.Core
       return GetProperty<P>(property);
     }
 
+    [NotUndoable]
+    [NonSerialized]
     private List<Csla.Core.IPropertyInfo> _lazyLoadingProperties = new List<Csla.Core.IPropertyInfo>();
 
     /// <summary>
@@ -1477,9 +1512,9 @@ namespace Csla.Core
       return LazyGetPropertyAsync(propertyInfo, factory);
     }
 
-    #endregion
+#endregion
 
-    #region  Read Properties
+#region  Read Properties
 
     /// <summary>
     /// Gets a property's value from the list of 
@@ -1611,9 +1646,9 @@ namespace Csla.Core
       return LazyReadPropertyAsync(propertyInfo, factory);
     }
 
-    #endregion
+#endregion
 
-    #region  Set Properties
+#region  Set Properties
 
     /// <summary>
     /// Sets a property's backing field with the supplied
@@ -1728,14 +1763,14 @@ namespace Csla.Core
     {
       try
       {
-        #region Check to see if the property is marked with RelationshipTypes.PrivateField
+#region Check to see if the property is marked with RelationshipTypes.PrivateField
 
         var propertyInfo = FieldManager.GetRegisteredProperty(propertyName);
 
         if ((propertyInfo.RelationshipType & RelationshipTypes.PrivateField) != RelationshipTypes.PrivateField)
           throw new InvalidOperationException(Resources.PrivateFieldException);
 
-        #endregion
+#endregion
 
 
         bool doChange = false;
@@ -1802,14 +1837,14 @@ namespace Csla.Core
     {
       try
       {
-        #region Check to see if the property is marked with RelationshipTypes.PrivateField
+#region Check to see if the property is marked with RelationshipTypes.PrivateField
 
         var propertyInfo = FieldManager.GetRegisteredProperty(propertyName);
 
         if ((propertyInfo.RelationshipType & RelationshipTypes.PrivateField) != RelationshipTypes.PrivateField)
           throw new InvalidOperationException(Resources.PrivateFieldException);
 
-        #endregion
+#endregion
 
         bool doChange = false;
         if (field == null)
@@ -2039,9 +2074,9 @@ namespace Csla.Core
       SetProperty(propertyInfo, (object)newValue);
     }
 
-    #endregion
+#endregion
 
-    #region  Load Properties
+#region  Load Properties
 
     /// <summary>
     /// Loads a property's managed field with the 
@@ -2511,9 +2546,9 @@ namespace Csla.Core
       LoadManager.BeginLoad(new TaskLoader<R>(property, factory));
     }
 
-    #endregion
+#endregion
 
-    #region IsBusy / IsIdle
+#region IsBusy / IsIdle
 
     [NonSerialized]
     [NotUndoable]
@@ -2551,6 +2586,9 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsBusy
     {
       get { return IsSelfBusy || (_fieldManager != null && FieldManager.IsBusy()); }
@@ -2562,6 +2600,9 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsSelfBusy
     {
       get { return _isBusy || BusinessRules.RunningAsyncRules || LoadManager.IsLoading; }
@@ -2618,9 +2659,9 @@ namespace Csla.Core
       return IsPropertyBusy(FieldManager.GetRegisteredProperty(propertyName));
     }
 
-    #endregion
+#endregion
 
-    #region INotifyUnhandledAsyncException Members
+#region INotifyUnhandledAsyncException Members
 
     [NotUndoable]
     [NonSerialized]
@@ -2659,9 +2700,9 @@ namespace Csla.Core
       OnUnhandledAsyncException(new ErrorEventArgs(originalSender, error));
     }
 
-    #endregion
+#endregion
 
-    #region Child Change Notification
+#region Child Change Notification
 
     [NonSerialized]
     [NotUndoable]
@@ -2750,7 +2791,13 @@ namespace Csla.Core
     /// </summary>
     private void Child_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-      RaiseChildChanged(sender, e);
+      // Issue 813
+      // MetaPropertyHasChanged calls in OnChildChanged we're leading to exponential growth in OnChildChanged calls
+      // Those notifications are for the UI. Ignore them here
+      if (!(e is MetaPropertyChangedEventArgs))
+      {
+        RaiseChildChanged(sender, e);
+      }
     }
 
 #if !(ANDROID || IOS) && !NETFX_CORE
@@ -2786,9 +2833,9 @@ namespace Csla.Core
       RaiseChildChanged(e);
     }
 
-    #endregion
+#endregion
 
-    #region  Field Manager
+#region  Field Manager
 
     private FieldManager.FieldDataManager _fieldManager;
 
@@ -2829,9 +2876,9 @@ namespace Csla.Core
       }
     }
 
-    #endregion
+#endregion
 
-    #region  IParent
+#region  IParent
 
     /// <summary>
     /// Override this method to be notified when a child object's method has completed.
@@ -2855,9 +2902,9 @@ namespace Csla.Core
       get { return this.Parent; }
     }
 
-    #endregion
+#endregion
 
-    #region IDataPortalTarget Members
+#region IDataPortalTarget Members
 
     void Csla.Server.IDataPortalTarget.CheckRules()
     {
@@ -2909,9 +2956,9 @@ namespace Csla.Core
       this.Child_OnDataPortalException(e, ex);
     }
 
-    #endregion
+#endregion
 
-    #region IManageProperties Members
+#region IManageProperties Members
 
     bool IManageProperties.HasManagedProperties
     {
@@ -2957,9 +3004,9 @@ namespace Csla.Core
     {
       return FieldManager.GetChildren();
     }
-    #endregion
+#endregion
 
-    #region MobileFormatter
+#region MobileFormatter
 
     /// <summary>
     /// Override this method to insert your field values
@@ -3062,9 +3109,9 @@ namespace Csla.Core
       base.OnSetChildren(info, formatter);
     }
 
-    #endregion
+#endregion
 
-    #region Property Checks ByPass
+#region Property Checks ByPass
 
     [NonSerialized]
     [NotUndoable]
@@ -3112,7 +3159,7 @@ namespace Csla.Core
         _businessObject._bypassPropertyChecks = true;
       }
 
-      #region IDisposable Members
+#region IDisposable Members
 
       /// <summary>
       /// Disposes the object.
@@ -3149,7 +3196,7 @@ namespace Csla.Core
         return businessObject._bypassPropertyChecksObject;
       }
 
-      #region  Reference counting
+#region  Reference counting
 
       private int _refCount;
 
@@ -3182,16 +3229,16 @@ namespace Csla.Core
         }
       }
 
-      #endregion
-      #endregion
+#endregion
+#endregion
     }
 
-    #endregion
+#endregion
 
 #if NETFX_CORE
 
 #if !ANDROID && !IOS
-    #region INotifyDataErrorInfo
+#region INotifyDataErrorInfo
 
     /// <summary>
     /// Event raised when error information has changed.
@@ -3243,11 +3290,11 @@ namespace Csla.Core
         OnErrorsChanged(new DataErrorsChangedEventArgs(p.Name));
     }
 
-    #endregion
+#endregion
 #endif
 #endif
 
-    #region ISuppressRuleChecking Members
+#region ISuppressRuleChecking Members
 
     /// <summary>
     /// Sets value indicating no rule methods will be invoked.
@@ -3281,6 +3328,6 @@ namespace Csla.Core
       return BrokenRulesCollection;
     }
 
-    #endregion
+#endregion
   }
 }

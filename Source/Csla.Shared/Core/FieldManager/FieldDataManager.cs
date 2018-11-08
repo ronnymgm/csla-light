@@ -26,7 +26,7 @@ namespace Csla.Core.FieldManager
   [System.Diagnostics.DebuggerStepThrough]
 #endif
   [Serializable]
-#if (ANDROID || IOS) || NETFX_CORE
+#if (ANDROID || IOS) || NETFX_CORE || NETSTANDARD2_0
   public class FieldDataManager : MobileObject, IUndoableObject
 #else
   public class FieldDataManager : IMobileObject
@@ -39,7 +39,7 @@ namespace Csla.Core.FieldManager
     private List<IPropertyInfo> _propertyList;
     private IFieldData[] _fieldData;
 
-#if (ANDROID || IOS) || NETFX_CORE
+#if (ANDROID || IOS) || NETFX_CORE || NETSTANDARD2_0
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
@@ -492,7 +492,7 @@ namespace Csla.Core.FieldManager
 
     #endregion
 
-#if (ANDROID || IOS) || NETFX_CORE
+#if (ANDROID || IOS) || NETFX_CORE || NETSTANDARD2_0
     #region IMobileObject Members
 
     /// <summary>

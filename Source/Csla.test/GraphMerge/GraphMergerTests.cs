@@ -224,6 +224,7 @@ namespace Csla.Test.GraphMerge
     }
 
     [TestMethod]
+    [TestCategory("SkipWhenLiveUnitTesting")]
     public void MergeList()
     {
       var obj = Csla.DataPortal.Create<FooList>();
@@ -244,9 +245,6 @@ namespace Csla.Test.GraphMerge
       cloned[1].Name = "new (cloned)";
       cloned.AddNew().Name = "new in clone";
       cloned.MockUpdated();
-
-      var changed = false;
-      obj.CollectionChanged += (o, e) => { changed = true; };
 
       var merger = new GraphMerger();
       merger.MergeBusinessListGraph<FooList, Foo>(obj, cloned);

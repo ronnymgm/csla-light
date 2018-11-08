@@ -9,11 +9,11 @@ using System;
 using System.Threading;
 using System.Security.Principal;
 using System.Collections.Specialized;
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
-using System.Configuration;
+#if !NETSTANDARD2_0
 using System.Web;
 #endif
 using Csla.Core;
+using Csla.Configuration;
 
 namespace Csla
 {
@@ -26,31 +26,42 @@ namespace Csla
     #region Context Manager
 
     private static IContextManager _contextManager;
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
-    private static IContextManager _webContextManager;
+
+    internal static void SettingsChanged()
+    {
+      _dataPortalReturnObjectOnExceptionSet = false;
+      _transactionIsolationLevelSet = false;
+      _defaultTransactionTimeoutInSecondsSet = false;
+    }
+
+  private static IContextManager _webContextManager;
+#if !NETSTANDARD2_0
     private static Type _webManagerType;
 #endif
 
     static ApplicationContext()
     {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
       Type _contextManagerType = null;
+
+#if !NETSTANDARD2_0
       _webManagerType = Type.GetType("Csla.Web.ApplicationContextManager, Csla.Web");
+      if (_webManagerType != null)
+        WebContextManager = (IContextManager)Activator.CreateInstance(_webManagerType);
+
       if (_contextManagerType == null)
         _contextManagerType = Type.GetType("Csla.Windows.ApplicationContextManager, Csla.Windows");
+#endif
+
       if (_contextManagerType == null)
         _contextManagerType = Type.GetType("Csla.Xaml.ApplicationContextManager, Csla.Xaml");
 
-      if (_webManagerType != null)
-        WebContextManager = (IContextManager)Activator.CreateInstance(_webManagerType);
       if (_contextManagerType != null)
         _contextManager = (IContextManager)Activator.CreateInstance(_contextManagerType);
-#endif
+
       if (_contextManager == null)
         _contextManager = new ApplicationContextManager();
     }
 
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
     /// <summary>
     /// Gets or sets the web context manager.
     /// Will use default WebContextManager. 
@@ -64,7 +75,6 @@ namespace Csla
       get { return _webContextManager; }
       set { _webContextManager = value; }
     }
-#endif
 
     /// <summary>
     /// Gets the context manager responsible
@@ -81,10 +91,8 @@ namespace Csla
     {
       get
       {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         if (WebContextManager != null && WebContextManager.IsValid)
             return WebContextManager;
-#endif
         return _contextManager;
       }
       set { _contextManager = value; }
@@ -233,8 +241,15 @@ namespace Csla
 
     #region Settings
 
+    /// <summary>
+    /// Gets or sets a value indicating whether CSLA
+    /// should fallback to using reflection instead of
+    /// System.Linq.Expressions (true, default).
+    /// </summary>
+    public static bool UseReflectionFallback { get; set; } = false;
+
     private static Csla.Server.IDataPortalActivator _dataPortalActivator = null;
-    private static object _dataPortalActivatorSync = new object();
+    private static readonly object _dataPortalActivatorSync = new object();
 
     /// <summary>
     /// Gets or sets an instance of the IDataPortalActivator provider.
@@ -245,7 +260,6 @@ namespace Csla
       {
         if (_dataPortalActivator == null)
         {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
           lock (_dataPortalActivatorSync)
           {
             if (_dataPortalActivator == null)
@@ -262,9 +276,6 @@ namespace Csla
               }
             }
           }
-#else
-          _dataPortalActivator = new Csla.Server.DefaultDataPortalActivator(); 
-#endif
         }
         return _dataPortalActivator;
       }
@@ -285,12 +296,10 @@ namespace Csla
     {
       get
       {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         if (_dataPortalUrl == null)
         {
           _dataPortalUrl = ConfigurationManager.AppSettings["CslaDataPortalUrl"];
         }
-#endif
         return _dataPortalUrl;
       }
       set
@@ -331,7 +340,7 @@ namespace Csla
     /// </para><para>
     /// The proxy class must implement Csla.DataPortalClient.IDataPortalProxyFactory.
     /// </para><para>
-    /// The value "Defaukt" is a shortcut for using the default 
+    /// The value "Default" is a shortcut for using the default 
     /// Csla.DataPortalClient.DefaultPortalProxyFactory  implementation.
     /// </para>
     /// </remarks>
@@ -341,9 +350,7 @@ namespace Csla
       {
         if (string.IsNullOrEmpty(_dataPortalProxyFactory))
         {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
           _dataPortalProxyFactory = ConfigurationManager.AppSettings["CslaDataPortalProxyFactory"];
-#endif
           if (string.IsNullOrEmpty(_dataPortalProxyFactory))
             _dataPortalProxyFactory = "Default";
         }
@@ -375,10 +382,8 @@ namespace Csla
     {
       get
       {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         if (_authenticationType == null)
           _authenticationType = ConfigurationManager.AppSettings["CslaAuthentication"];
-#endif
         if (_authenticationType == null)
           _authenticationType = "Csla";
         return _authenticationType; 
@@ -412,10 +417,8 @@ namespace Csla
     {
       get
       {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         if (string.IsNullOrEmpty(_dataPortalProxy))
           _dataPortalProxy = ConfigurationManager.AppSettings["CslaDataPortalProxy"];
-#endif
         if (string.IsNullOrEmpty(_dataPortalProxy))
           _dataPortalProxy = "Local";
         return _dataPortalProxy;
@@ -445,9 +448,7 @@ namespace Csla
       get
       {
         string result = null;
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         result = ConfigurationManager.AppSettings["CslaIsInRoleProvider"];
-#endif
         if (string.IsNullOrEmpty(result))
           result = string.Empty;
         return result;
@@ -464,11 +465,9 @@ namespace Csla
       get
       {
         bool result = true;
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         string setting = ConfigurationManager.AppSettings["CslaAutoCloneOnUpdate"];
         if (!string.IsNullOrEmpty(setting))
           result = bool.Parse(setting);
-#endif
         return result;
       }
     }
@@ -488,7 +487,7 @@ namespace Csla
       {
         if (!_dataPortalReturnObjectOnExceptionSet)
         {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
+#if !ANDROID && !IOS && !NETFX_CORE && !NETSTANDARD2_0
           string setting = ConfigurationManager.AppSettings["CslaDataPortalReturnObjectOnException"];
           if (!string.IsNullOrEmpty(setting))
             DataPortalReturnObjectOnException = bool.Parse(setting);
@@ -532,20 +531,19 @@ namespace Csla
     {
       get
       {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
+        var result = SerializationFormatters.CustomFormatter;
+
         string tmp = ConfigurationManager.AppSettings["CslaSerializationFormatter"];
-
-        if (string.IsNullOrEmpty(tmp))
-          tmp = "BinaryFormatter";
-
-        SerializationFormatters serializationFormatter;
-        if (Enum.TryParse(tmp, true, out serializationFormatter))
-            return serializationFormatter;
-
-        return SerializationFormatters.CustomFormatter;
+        if (string.IsNullOrWhiteSpace(tmp))
+#if NETSTANDARD2_0
+          tmp = "MobileFormatter";
 #else
-        return SerializationFormatters.MobileFormatter;
+          tmp = "BinaryFormatter";
 #endif
+        if (Enum.TryParse(tmp, true, out SerializationFormatters serializationFormatter))
+          result = serializationFormatter;
+
+        return result;
       }
     }
 
@@ -555,24 +553,24 @@ namespace Csla
     /// </summary>
     public enum SerializationFormatters
     {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
-      /// <summary>
-      /// Use the standard Microsoft .NET
-      /// <see cref="BinaryFormatter"/>.
-      /// </summary>
-      BinaryFormatter,
+#if !NETSTANDARD2_0
       /// <summary>
       /// Use the Microsoft .NET 3.0
       /// <see cref="System.Runtime.Serialization.NetDataContractSerializer">
       /// NetDataContractSerializer</see> provided as part of WCF.
       /// </summary>
       NetDataContractSerializer,
+#endif
+      /// <summary>
+      /// Use the standard Microsoft .NET
+      /// <see cref="BinaryFormatter"/>.
+      /// </summary>
+      BinaryFormatter,
       /// <summary>
       /// Use a custom formatter provided by type found
       /// at <appSetting key="CslaSerializationFormatter"></appSetting>
       /// </summary>
       CustomFormatter,
-#endif
       /// <summary>
       /// Use the CSLA .NET MobileFormatter
       /// </summary>
@@ -580,9 +578,7 @@ namespace Csla
     }
 
     private static PropertyChangedModes _propertyChangedMode = PropertyChangedModes.Xaml;
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
     private static bool _propertyChangedModeSet;
-#endif
     /// <summary>
     /// Gets or sets a value specifying how CSLA .NET should
     /// raise PropertyChanged events.
@@ -591,7 +587,6 @@ namespace Csla
     {
       get
       {
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         if (!_propertyChangedModeSet)
         {
           string tmp = ConfigurationManager.AppSettings["CslaPropertyChangedMode"];
@@ -601,15 +596,12 @@ namespace Csla
             Enum.Parse(typeof(PropertyChangedModes), tmp);
           _propertyChangedModeSet = true;
         }
-#endif
         return _propertyChangedMode;
       }
       set
       {
         _propertyChangedMode = value;
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
         _propertyChangedModeSet = true;
-#endif
       }
     }
 
@@ -636,7 +628,7 @@ namespace Csla
     }
 
     private static ExecutionLocations _executionLocation =
-#if (ANDROID || IOS) || NETFX_CORE
+#if (ANDROID || IOS || NETFX_CORE) && !NETSTANDARD
       ExecutionLocations.MobileClient;
 #else
       ExecutionLocations.Client;
@@ -678,10 +670,11 @@ namespace Csla
       }
     }
 
-#if !(ANDROID || IOS) && !NETFX_CORE && !NETSTANDARD2_0
+    private static TransactionIsolationLevel _transactionIsolationLevel = TransactionIsolationLevel.Unspecified;
+    private static bool _transactionIsolationLevelSet = false;
 
     /// <summary>
-    /// Gets the default transaction isolation level.
+    /// Gets or sets the default transaction isolation level.
     /// </summary>
     /// <value>
     /// The default transaction isolation level.
@@ -690,17 +683,29 @@ namespace Csla
     {
       get
       {
-        string tmp = ConfigurationManager.AppSettings["CslaDefaultTransactionIsolationLevel"];
-        if (string.IsNullOrEmpty(tmp))
+        if (!_transactionIsolationLevelSet)
         {
-          return TransactionIsolationLevel.Unspecified;
+          string tmp = ConfigurationManager.AppSettings["CslaDefaultTransactionIsolationLevel"];
+          if (!string.IsNullOrEmpty(tmp))
+          {
+            _transactionIsolationLevel = (TransactionIsolationLevel)Enum.Parse(typeof(TransactionIsolationLevel), tmp);
+          }
+          _transactionIsolationLevelSet = true;
         }
-        return (TransactionIsolationLevel)Enum.Parse(typeof(TransactionIsolationLevel), tmp);
+        return _transactionIsolationLevel;
+      }
+      set
+      {
+        _transactionIsolationLevel = value;
+        _transactionIsolationLevelSet = true;
       }
     }
 
+    private static int _defaultTransactionTimeoutInSeconds = 30;
+    private static bool _defaultTransactionTimeoutInSecondsSet = false;
+
     /// <summary>
-    /// Gets the default transaction timeout in seconds.
+    /// Gets or sets the default transaction timeout in seconds.
     /// </summary>
     /// <value>
     /// The default transaction timeout in seconds.
@@ -709,16 +714,24 @@ namespace Csla
     {
       get
       {
-        var tmp = ConfigurationManager.AppSettings["CslaDefaultTransactionTimeoutInSeconds"];
-        return string.IsNullOrEmpty(tmp) ? 30 : int.Parse(tmp);
+        if (!_defaultTransactionTimeoutInSecondsSet)
+        {
+          var tmp = ConfigurationManager.AppSettings["CslaDefaultTransactionTimeoutInSeconds"];
+          _defaultTransactionTimeoutInSeconds = string.IsNullOrEmpty(tmp) ? 30 : int.Parse(tmp);
+          _defaultTransactionTimeoutInSecondsSet = true;
+        }
+        return _defaultTransactionTimeoutInSeconds;
+      }
+      set
+      {
+        _defaultTransactionTimeoutInSeconds = value;
+        _defaultTransactionTimeoutInSecondsSet = true;
       }
     }
 
-#endif
+#endregion
 
-    #endregion
-
-    #region Logical Execution Location
+#region Logical Execution Location
     /// <summary>
     /// Enum representing the logical execution location
     /// The setting is set to server when server is execting
@@ -761,100 +774,84 @@ namespace Csla
     {
       LocalContext["__logicalExecutionLocation"] = location;
     }
-    #endregion
+#endregion
 
-    #region Default context manager
+#region Default context manager
 
-#if ((ANDROID || IOS) || NETFX_CORE) && !(ANDROID || IOS)
-    private class ApplicationContextManager : IContextManager
+    /// <summary>
+    /// Default context manager for the user property
+    /// and local/client/global context dictionaries.
+    /// </summary>
+    public class ApplicationContextManager : IContextManager
     {
-      private static ContextDictionary _localContext;
-      private static ContextDictionary _clientContext;
-      private static ContextDictionary _globalContext;
-      private static IPrincipal _principal = new Csla.Security.UnauthenticatedPrincipal();
-
-      public bool IsValid
-      {
-        get { return true; }
-      }
-
-      public IPrincipal GetUser()
-      {
-        return _principal;
-      }
-
-      public void SetUser(IPrincipal principal)
-      {
-        _principal = principal;
-      }
-
-      public ContextDictionary GetLocalContext()
-      {
-        return _localContext;
-      }
-
-      public void SetLocalContext(ContextDictionary localContext)
-      {
-        _localContext = localContext;
-      }
-
-      public ContextDictionary GetClientContext()
-      {
-        return _clientContext;
-      }
-
-      public void SetClientContext(ContextDictionary clientContext)
-      {
-        _clientContext = clientContext;
-      }
-
-      public ContextDictionary GetGlobalContext()
-      {
-        return _globalContext;
-      }
-
-      public void SetGlobalContext(ContextDictionary globalContext)
-      {
-        _globalContext = globalContext;
-      }
-    }
-#else
-    private class ApplicationContextManager : IContextManager
-    {
+#if NET40 || NET45
       private const string _localContextName = "Csla.LocalContext";
       private const string _clientContextName = "Csla.ClientContext";
+#else
+      private AsyncLocal<ContextDictionary> _localContext = new AsyncLocal<ContextDictionary>();
+      private AsyncLocal<ContextDictionary> _clientContext = new AsyncLocal<ContextDictionary>();
+#endif
       private const string _globalContextName = "Csla.GlobalContext";
 
+      /// <summary>
+      /// Returns a value indicating whether the context is valid.
+      /// </summary>
       public bool IsValid
       {
         get { return true; }
       }
 
-      public IPrincipal GetUser()
+      /// <summary>
+      /// Gets the current user principal.
+      /// </summary>
+      /// <returns>The current user principal</returns>
+      public virtual IPrincipal GetUser()
       {
-        IPrincipal current = Thread.CurrentPrincipal;
-        return current;
+        return Thread.CurrentPrincipal;
       }
 
-      public void SetUser(IPrincipal principal)
+      /// <summary>
+      /// Sets teh current user principal.
+      /// </summary>
+      /// <param name="principal">User principal value</param>
+      public virtual void SetUser(IPrincipal principal)
       {
         Thread.CurrentPrincipal = principal;
       }
 
+      /// <summary>
+      /// Gets the local context dictionary.
+      /// </summary>
       public ContextDictionary GetLocalContext()
       {
+#if NET40 || NET45
         LocalDataStoreSlot slot = Thread.GetNamedDataSlot(_localContextName);
         return (ContextDictionary)Thread.GetData(slot);
+#else
+        return _localContext.Value;
+#endif
       }
 
+      /// <summary>
+      /// Sets the local context dictionary.
+      /// </summary>
+      /// <param name="localContext">Context dictionary</param>
       public void SetLocalContext(ContextDictionary localContext)
       {
+#if NET40 || NET45
         LocalDataStoreSlot slot = Thread.GetNamedDataSlot(_localContextName);
         Thread.SetData(slot, localContext);
+#else
+        _localContext.Value = localContext;
+#endif
       }
 
+      /// <summary>
+      /// Gets the client context dictionary.
+      /// </summary>
       public ContextDictionary GetClientContext()
       {
+#if NET40 || NET45 
         if (ApplicationContext.ExecutionLocation == ExecutionLocations.Client)
         {
           return (ContextDictionary)AppDomain.CurrentDomain.GetData(_clientContextName);
@@ -864,10 +861,18 @@ namespace Csla
           LocalDataStoreSlot slot = Thread.GetNamedDataSlot(_clientContextName);
           return (ContextDictionary)Thread.GetData(slot);
         }
+#else
+        return _clientContext.Value;
+#endif
       }
 
+      /// <summary>
+      /// Sets the client context dictionary.
+      /// </summary>
+      /// <param name="clientContext">Context dictionary</param>
       public void SetClientContext(ContextDictionary clientContext)
       {
+#if NET40 || NET45 
         if (ApplicationContext.ExecutionLocation == ExecutionLocations.Client)
         {
           AppDomain.CurrentDomain.SetData(_clientContextName, clientContext);
@@ -877,22 +882,31 @@ namespace Csla
           LocalDataStoreSlot slot = Thread.GetNamedDataSlot(_clientContextName);
           Thread.SetData(slot, clientContext);
         }
+#else
+        _clientContext.Value = clientContext;
+#endif
       }
 
+      /// <summary>
+      /// Gets the global context dictionary.
+      /// </summary>
       public ContextDictionary GetGlobalContext()
       {
         LocalDataStoreSlot slot = Thread.GetNamedDataSlot(_globalContextName);
         return (ContextDictionary)Thread.GetData(slot);
       }
 
+      /// <summary>
+      /// Sets the global context dictionary.
+      /// </summary>
+      /// <param name="globalContext">Context dictionary</param>
       public void SetGlobalContext(ContextDictionary globalContext)
       {
         LocalDataStoreSlot slot = Thread.GetNamedDataSlot(_globalContextName);
         Thread.SetData(slot, globalContext);
       }
     }
-#endif
 
-    #endregion
+#endregion
   }
 }

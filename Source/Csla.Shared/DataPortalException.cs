@@ -63,8 +63,8 @@ namespace Csla
       _innerStackTrace = ex.StackTrace;
     }
 
-#if !NETFX_PHONE || PCL46
-#if !NETCORE && !PCL46 && !ANDROID && !NETSTANDARD2_0
+#if !NETFX_PHONE || PCL46 || PCL259
+#if !NETCORE && !PCL46 && !ANDROID && !NETSTANDARD2_0 && !PCL259
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
@@ -157,12 +157,12 @@ namespace Csla
     {
       get
       {
-        var result = this.InnerException.InnerException;
-        var dpe = result as DataPortalException;
-        if (dpe != null && dpe.InnerException != null)
+        var result = this.InnerException;
+        if (result != null)
+          result = result.InnerException;
+        if (result is DataPortalException dpe && dpe.InnerException != null)
           result = dpe.InnerException;
-        var cme = result as Csla.Reflection.CallMethodException;
-        if (cme != null && cme.InnerException != null)
+        if (result is Csla.Reflection.CallMethodException cme && cme.InnerException != null)
           result = cme.InnerException;
         return result;
       }

@@ -6,9 +6,7 @@
 // <summary>Factory used to create the appropriate</summary>
 //-----------------------------------------------------------------------
 using System;
-#if !((ANDROID || IOS) || NETFX_CORE)
-using System.Configuration;
-#endif
+using Csla.Configuration;
 using Csla.Reflection;
 
 namespace Csla.Serialization
@@ -25,13 +23,12 @@ namespace Csla.Serialization
     /// </summary>
     public static ISerializationFormatter GetFormatter()
     {
-#if (ANDROID || IOS) || NETFX_CORE || NETSTANDARD2_0
-      return new Csla.Serialization.Mobile.MobileFormatter();
-#else
       if (ApplicationContext.SerializationFormatter == ApplicationContext.SerializationFormatters.BinaryFormatter)
         return new BinaryFormatterWrapper();
+#if !NETSTANDARD2_0
       else if (ApplicationContext.SerializationFormatter == ApplicationContext.SerializationFormatters.NetDataContractSerializer)
         return new NetDataContractSerializerWrapper();
+#endif
       else if (ApplicationContext.SerializationFormatter == ApplicationContext.SerializationFormatters.CustomFormatter)
       {
         string customFormatterTypeName = ConfigurationManager.AppSettings["CslaSerializationFormatter"];
@@ -39,7 +36,6 @@ namespace Csla.Serialization
       }
       else
         return new Csla.Serialization.Mobile.MobileFormatter();
-#endif
     }
   }
 }

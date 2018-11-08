@@ -1,4 +1,4 @@
-#if !NETFX_PHONE && !NETCORE && !PCL46 && !ANDROID && !NETSTANDARD2_0
+#if !NETFX_PHONE && !NETCORE && !PCL46 && !ANDROID && !NETSTANDARD2_0 && !PCL259
 //-----------------------------------------------------------------------
 // <copyright file="WcfProxy.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
@@ -97,6 +97,19 @@ namespace Csla.DataPortalClient
     public WcfProxy()
     {
       this.DataPortalUrl = WcfProxy.DefaultUrl;
+      this.Binding = WcfProxy.DefaultBinding;
+      this.EndPoint = WcfProxy.DefaultEndPoint;
+    }
+
+    /// <summary>
+    /// Creates an instance of the object, initializing
+    /// it to use the supplied URL and DefaultBinding
+    /// values.
+    /// </summary>
+    /// <param name="dataPortalUrl">Server endpoint URL</param>
+    public WcfProxy(string dataPortalUrl)
+    {
+      this.DataPortalUrl = dataPortalUrl;
       this.Binding = WcfProxy.DefaultBinding;
       this.EndPoint = WcfProxy.DefaultEndPoint;
     }

@@ -184,7 +184,7 @@ namespace Csla
         
     #endregion
 
-    #region IClonable
+#region IClonable
 
     object ICloneable.Clone()
     {
@@ -211,9 +211,9 @@ namespace Csla
     {
       return (T)GetClone();
     }
-    #endregion
+#endregion
 
-    #region Data Access
+#region Data Access
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "criteria")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
@@ -309,16 +309,16 @@ namespace Csla
     {
     }
 
-    #endregion
+#endregion
 
-    #region Serialization Notification
+#region Serialization Notification
 
     void ISerializationNotification.Deserialized()
     {
       OnDeserializedHandler(new System.Runtime.Serialization.StreamingContext());
     }
 
-#if !NETFX_CORE || PCL46 || WINDOWS_UWP
+#if !NETFX_CORE || PCL46 || WINDOWS_UWP || PCL259
     [System.Runtime.Serialization.OnDeserialized()]
 #endif
     private void OnDeserializedHandler(System.Runtime.Serialization.StreamingContext context)
@@ -341,9 +341,9 @@ namespace Csla
       // could override if needed
     }
 
-    #endregion
+#endregion
 
-    #region  Register Properties
+#region  Register Properties
 
     /// <summary>
     /// Indicates that the specified property belongs
@@ -477,9 +477,9 @@ namespace Csla
       return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, friendlyName, relationship));
     }
 
-    #endregion
+#endregion
 
-    #region Register Methods
+#region Register Methods
 
     /// <summary>
     /// Indicates that the specified method belongs
@@ -534,9 +534,9 @@ namespace Csla
       return RegisterMethod(typeof(T), reflectedMethodInfo.Name);
     }
 
-    #endregion
+#endregion
 
-    #region  Get Properties
+#region  Get Properties
 
     /// <summary>
     /// Gets a property's value, first checking authorization.
@@ -579,14 +579,14 @@ namespace Csla
     /// user is not authorized to read this property.</param>
     protected P GetProperty<P>(string propertyName, P field, P defaultValue, Security.NoAccessBehavior noAccess)
     {
-      #region Check to see if the property is marked with RelationshipTypes.PrivateField
+#region Check to see if the property is marked with RelationshipTypes.PrivateField
 
       var propertyInfo = FieldManager.GetRegisteredProperty(propertyName);
 
       if ((propertyInfo.RelationshipType & RelationshipTypes.PrivateField) != RelationshipTypes.PrivateField)
         throw new InvalidOperationException(Resources.PrivateFieldException);
 
-      #endregion
+#endregion
 
       return field;
     }
@@ -852,9 +852,9 @@ namespace Csla
       return result;
     }
 
-    #endregion
+#endregion
 
-    #region  Read Properties
+#region  Read Properties
 
     /// <summary>
     /// Gets a property's value from the list of 
@@ -976,9 +976,9 @@ namespace Csla
       return LazyReadPropertyAsync(propertyInfo, factory);
     }
 
-    #endregion
+#endregion
 
-    #region  Load Properties
+#region  Load Properties
 
     /// <summary>
     /// Loads a property's managed field with the 
@@ -1175,9 +1175,9 @@ namespace Csla
     {
       LoadManager.BeginLoad(new TaskLoader<R>(property, factory));
     }
-    #endregion
+#endregion
 
-    #region  Field Manager
+#region  Field Manager
 
     [NotUndoable()]
     private FieldDataManager _fieldManager;
@@ -1198,9 +1198,9 @@ namespace Csla
       }
     }
 
-    #endregion
+#endregion
 
-    #region IsBusy / IsIdle
+#region IsBusy / IsIdle
 
     [NonSerialized]
     [NotUndoable]
@@ -1238,6 +1238,9 @@ namespace Csla
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsBusy
     {
       get { return IsSelfBusy || (_fieldManager != null && FieldManager.IsBusy()); }
@@ -1250,6 +1253,9 @@ namespace Csla
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+#if !PCL46 && !PCL259 
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
+#endif
     public virtual bool IsSelfBusy
     {
       get { return _isBusy || LoadManager.IsLoading; }
@@ -1297,9 +1303,9 @@ namespace Csla
         _propertyBusy(this, args);
     }
 
-    #endregion
+#endregion
 
-    #region IDataPortalTarget Members
+#region IDataPortalTarget Members
 
     void Csla.Server.IDataPortalTarget.CheckRules()
     { }
@@ -1343,9 +1349,9 @@ namespace Csla
       this.Child_OnDataPortalException(e, ex);
     }
 
-    #endregion
+#endregion
 
-    #region IManageProperties Members
+#region IManageProperties Members
 
     bool IManageProperties.HasManagedProperties
     {
@@ -1402,9 +1408,9 @@ namespace Csla
     {
       return FieldManager.GetChildren();
     }
-    #endregion
+#endregion
 
-    #region MobileFormatter
+#region MobileFormatter
 
     /// <summary>
     /// Override this method to insert your child object
@@ -1449,9 +1455,9 @@ namespace Csla
       base.OnSetChildren(info, formatter);
     }
 
-    #endregion
+#endregion
 
-    #region INotifyUnhandledAsyncException Members
+#region INotifyUnhandledAsyncException Members
 
     [NotUndoable]
     [NonSerialized]
@@ -1490,6 +1496,6 @@ namespace Csla
       OnUnhandledAsyncException(new ErrorEventArgs(originalSender, error));
     }
 
-    #endregion
+#endregion
   }
 }

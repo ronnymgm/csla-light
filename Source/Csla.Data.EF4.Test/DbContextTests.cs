@@ -59,6 +59,8 @@ namespace Csla.Data.EF4.Test
         }
 
         [TestMethod]
+        [TestCategory("SkipWhenLiveUnitTesting")]
+
         public void Table2_retreived_through_DbContextDataContext_has_records()
         {
             using (var dbContextManager = DbContextManager<DataPortalDbContext>.GetManager())
