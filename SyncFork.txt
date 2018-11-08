@@ -2,3 +2,6 @@ git remote add upstream https://github.com/MarimerLLC/csla.git
 git fetch upstream
 git checkout master
 git merge upstream/master
+
+--To list all conflicts
+git diff --name-only --diff-filter=U
