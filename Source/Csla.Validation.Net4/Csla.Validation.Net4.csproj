@@ -100,12 +100,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Csla.Net4\Csla.Net4.csproj">
-      <Project>{1fce45ff-c391-4ed1-a9c4-f71caf8773e6}</Project>
-      <Name>Csla.Net4</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
     <None Include="CslaKey.snk" />
     <None Include="packages.config" />

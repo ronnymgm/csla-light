@@ -124,12 +124,6 @@
     <None Include="CslaKey.snk" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Csla.Net4\Csla.Net4.csproj">
-      <Project>{1fce45ff-c391-4ed1-a9c4-f71caf8773e6}</Project>
-      <Name>Csla.Net4</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="..\Csla.Web.Mvc.Shared\Csla.Web.Mvc.Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" />
